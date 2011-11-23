@@ -62,6 +62,24 @@ say()
 	fi
 }
 
+progress_bar()
+{
+	local width=50
+	local max=$1 curr=$2 pos=$width perc=100
+	if [ $curr -lt $max ]; then
+		pos=$((curr*width/max))
+		perc=$((curr*100/max))
+	fi
+	local str="\r[$(printf "%${pos}s" \
+		| sed 's/ /#/g')$(printf "%$((width-$pos))s" \
+		| sed 's/ /-/g')]"
+	str="$str $perc%"
+	str="$str ($curr/$max)"
+	echo >&2 -ne $str
+	[ $perc -eq 100 ] && echo >&2
+}
+
+
 assert()
 {
 	if "$@"; then
@@ -593,8 +611,8 @@ cmd_split()
 	eval "$grl" |
 	while read rev parents; do
 		revcount=$(($revcount + 1))
-		say -n "$revcount/$revmax ($createcount)
-"
+		progress_bar $revmax $createcount
+
 		debug "Processing commit: $rev"
 		exists=$(cache_get $rev)
 		if [ -n "$exists" ]; then
